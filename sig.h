@@ -5,13 +5,14 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <execinfo.h>
+#include <errno.h>
 
 static struct sigaction g_segv_act;
 static struct sigaction g_abrt_act;
 
 extern volatile sig_atomic_t g_sig_stat;
 
-inline void signal_back_trace()
+static inline void signal_back_trace()
 {
 	void *buf[1024];
 	int idx, sz = backtrace(buf, 1024);
@@ -22,9 +23,12 @@ inline void signal_back_trace()
 			printf("%s\n", strs[idx]);
 }
 
-inline void signal_handler(int sig)
+static inline void signal_handler(int sig)
 {
 	printf("SIG: recv sig [%d]\n", sig);
+	
+	if (sig == SIGPIPE)
+                return;
 	
 	if (sig == SIGSEGV) {
 		signal_back_trace();
@@ -35,10 +39,9 @@ inline void signal_handler(int sig)
 		g_abrt_act.sa_handler(sig);
 		exit(EXIT_FAILURE);
 	}
-	if (sig == SIGPIPE)
-                return;
-	
+
 	g_sig_stat = sig;
+	exit(errno); // exit?
 }
 
 inline void signal_register()
