@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <execinfo.h>
 
 static struct sigaction g_segv_act;
 static struct sigaction g_abrt_act;
@@ -34,15 +36,15 @@ inline void signal_handler(int sig)
 		exit(EXIT_FAILURE);
 	}
 	if (sig == SIGPIPE)
-    return;
+                return;
 	
-	sig_stat = sig;
+	g_sig_stat = sig;
 }
 
 inline void signal_register()
 {
-	struct sigaction sig_act, old_sig_act;
-	sigemptyset(&act.sa_mask);
+	struct sigaction sig_act;
+	sigemptyset(&sig_act.sa_mask);
 	sig_act.sa_handler = signal_handler;
 	
 	sigaction(SIGINT, &sig_act, NULL);
