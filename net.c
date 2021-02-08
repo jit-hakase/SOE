@@ -1,15 +1,38 @@
+#include "cpu.h"
+
+static void net_timeout_init(uint64_t *time_now)
+{
+	RDTSCP(*time_now);
+}
+
+static int net_timeout_check(const uint64_t time_start, const uint64_t time_gap)
+{
+	uint64_t time_dead, time_now;
+	
+	time_dead = time_start + time_gap;
+	RDTSCP(time_now);
+	
+	return time_now >= time_dead;
+}
+
 static int net_nio_operate(int fd, char *buf, size_t len, ssize_t (*io_fn)(int, void*, size_t ,int))
 {
+	static uint64_t time_gap = 1000000000;
+	uint64_t time_start;
 	size_t remain;
 	ssize_t io_ret_n;
 	
 	remain = len;
+	net_timeout_init(&time_start);
 	
 	while (remain > 0) {
 		io_ret_n = io_fn(fd, buf, remain, MSG_DONTWAIT);
 		if (io_ret_n < 0) {
 			if (errno == EAGAIN || errno == EINTR) {
-				io_n = 0;
+				if (net_timeout_check(time_start, time_gap)) {
+					return -2;
+				}
+				io_ret_n = 0;
 			} else {
 				return -1;
 			}
