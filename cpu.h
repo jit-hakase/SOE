@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <pthread.h>
+#include <sched.h>
 
 #define CPU_PAUSE() asm volatile (".byte 0xf3, 0x90")
 
@@ -33,6 +34,35 @@ inline int cpu_bind_core(int cpu_id, int prior) {
 	if (0 != pthread_attr_setschedparam(&attr, &param)) return -1;
 	
 	return 0;
+}
+
+void atomic_initlock(volatile int *flag)
+{
+	__sync_lock_test_and_set(flag, 0);
+}
+
+void atomic_trylock(volatile int *flag)
+{
+	return __sync_fetch_and_or(flag, 1);
+}
+
+void atomic_idlelock(volatile int *flag)
+{
+	while (!atomic_trylock()) {
+		sched_yield();
+	}
+}
+
+void atomic_lock(volatile int *flag)
+{
+	while (!atomic_trylock()) {
+		;
+	}
+}
+
+void atomic_unlock(volatile int *flag)
+{
+	__sync_and_and_fetch(flag, 0);
 }
 
 #endif
