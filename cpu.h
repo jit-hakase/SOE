@@ -41,21 +41,21 @@ void atomic_initlock(volatile int *flag)
 	__sync_lock_test_and_set(flag, 0);
 }
 
-void atomic_trylock(volatile int *flag)
+volatile int atomic_trylock(volatile int *flag)
 {
 	return __sync_fetch_and_or(flag, 1);
 }
 
 void atomic_idlelock(volatile int *flag)
 {
-	while (!atomic_trylock()) {
+	while (atomic_trylock()) {
 		sched_yield();
 	}
 }
 
 void atomic_lock(volatile int *flag)
 {
-	while (!atomic_trylock()) {
+	while (atomic_trylock()) {
 		;
 	}
 }
