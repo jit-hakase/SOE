@@ -84,3 +84,27 @@ int net_set_nodelay(int fd)
 	const int flag = 1;
 	return setsockopt(fd, SOL_SOCKET, TCP_NODELAY, &flag, sizeof(flag));
 }
+
+ssize_t net_sendn(int fd, const char *buf, size_t len)
+{
+	size_t remain;
+	ssize_t ret_n;
+	
+	remain = len;
+	
+	while (remain > 0) {
+		ret_n = send(fd, buf, remain, MSG_DONTWAIT);
+		if (ret_n < 0) {
+			if (errno == EAGAIN || errno == EINTR) {
+				continue;
+			} else {
+				return -1;
+			}
+		} else if (ret_n == 0) {
+			break;
+		}
+		remain -= ret_n;
+		buf += ret_n;
+	}
+	return (ssize_t) (len - remain);
+}
