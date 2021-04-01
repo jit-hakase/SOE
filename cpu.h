@@ -65,4 +65,15 @@ void atomic_unlock(volatile int *flag)
 	__sync_and_and_fetch(flag, 0);
 }
 
+#include <sys/resource.h>
+#include <sys/time.h>
+
+void generate_coredump()
+{
+	struct rlimit res;
+	res.rlim_cur = RLIM_INFINITY;
+	res.rlim_max = RLIM_INFINITY;
+	setrlimit(RLIMIT_CORE, &res);
+}
+
 #endif
