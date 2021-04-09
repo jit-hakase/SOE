@@ -36,33 +36,18 @@ inline int cpu_bind_core(int cpu_id, int prior) {
 	return 0;
 }
 
-void atomic_initlock(volatile int *flag)
+inline void lock_spin_lock(volatile uint32_t *flag)
 {
-	__sync_lock_test_and_set(flag, 0);
-}
-
-volatile int atomic_trylock(volatile int *flag)
-{
-	return __sync_fetch_and_or(flag, 1);
-}
-
-void atomic_idlelock(volatile int *flag)
-{
-	while (atomic_trylock()) {
-		sched_yield();
+	while (__sync_lock_test_and_set(flag, 1)) {
+		while (*flag) {
+			__asm__("pause" ::: "memory");
+		}
 	}
 }
 
-void atomic_lock(volatile int *flag)
+inline void lock_spin_unlock(volatile uint32_t *flag)
 {
-	while (atomic_trylock()) {
-		;
-	}
-}
-
-void atomic_unlock(volatile int *flag)
-{
-	__sync_and_and_fetch(flag, 0);
+	__sync_lock_release(flag);
 }
 
 #include <sys/resource.h>
