@@ -1,12 +1,11 @@
-inline int tcp_channel_init(int *sock)
+inline int tcp_channel_init()
 {
-	int ret;
-	
-	ret = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (-1 == ret) return -1;
-	
-	*sock = ret;
-	return 0;
+	return socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+}
+
+inline int udp_channel_init()
+{
+	return socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 }
 
 inline int tcp_channel_listen(int sock, uint16_t port)
@@ -32,16 +31,9 @@ inline int tcp_channel_listen(int sock, uint16_t port)
 	return 0;
 }
 
-inline int tcp_channel_accept(int sock, int *clt_sock)
+inline int tcp_channel_accept(int sock)
 {
-	int ret;
-	
-	ret = accept(sock, NULL, NULL);
-	
-	if (-1 == ret) return -1;
-	
-	*clt_sock = ret;
-	return 0;
+	return accept(sock, NULL, NULL);
 }
 
 inline int tcp_channel_connect(int sock)
