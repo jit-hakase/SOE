@@ -131,3 +131,62 @@ static inline tcp_channel_t tcp_server_accept(tcp_server_t *svr)
 
 
 
+
+???
+	class Buffer {
+public:
+	Buffer(size_t size) : m_size(size) {
+		m_buf = calloc(1, size);
+	}
+	~Buffer() {
+		free(m_buf);
+	}
+	
+	bool is_ok() {
+		if (read_size() >= 4) {
+			uint32_t len = *(uint32_t*) (m_buf + m_ridx);
+			if (len >= read_size()) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	void get(char *buf) {
+		uint32_t len = *(uint32_t*) (m_buf + m_ridx);
+		memcpy(buf, m_buf+m_ridx, len+4);
+		m_ridx += len+4;
+	}
+	
+	int peek_len() {
+		if (read_size() >= 4) {
+			return (uint32_t*) (m_buf + m_ridx);
+		}
+		return -1;
+	}
+	
+	bool append(char *buf, size_t size) {
+		while (m_widx + size > m_size) {
+			m_size = m_size * 2;
+			m_buf = realloc(m_buf, m_size);
+		}
+		memcpy(m_buf + m_widx, buf, size);
+		m_widx += size;
+	}
+	
+	int read_size() {
+		return m_widx - m_ridx;
+	}
+	
+	void rewind() {
+		m_ridx = m_widx = 0;
+	}
+private:
+	char *m_buf;
+	int m_ridx = 0;
+	int m_widx = 0;
+};
+
